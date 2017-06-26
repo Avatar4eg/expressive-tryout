@@ -7,6 +7,7 @@ use App\Entity\Template;
 use App\Service\EditorService;
 use App\Service\FileService;
 use App\Service\TaskService;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManager;
 use Interop\Http\ServerMiddleware\DelegateInterface;
 use Interop\Http\ServerMiddleware\MiddlewareInterface as ServerMiddlewareInterface;
@@ -53,12 +54,12 @@ class TaskCreateAction implements ServerMiddlewareInterface
     {
         /** @var Client $client */
         $client = $request->{'client'};
-        $data = $request{'parsed_data'};
+        $data = $request->{'parsed_data'};
 
         /** @var Template|null $template */
         $template = $this->entityManager->getRepository(Template::class)->find($data['template']);
         if ($template === null) {
-            new JsonResponse([
+            return new JsonResponse([
                 'success'   => false,
                 'messages'  => [
                     'Template not found',
@@ -66,9 +67,15 @@ class TaskCreateAction implements ServerMiddlewareInterface
             ], 404);
         }
 
+        $this->task = new Task($client, $data['task'], $template);
+        $this->task->setCallbackUrl($data['callback_url'])
+            ->setParams($data['data'])
+            ->setLastRenderId($data['render']);
+
+        $this->entityManager->persist($this->task);
         try {
-            $this->task = new Task($client, $data['task'], $template);
-        } catch (\Exception $e) {
+            $this->entityManager->flush();
+        } catch (UniqueConstraintViolationException $e) {
             return new JsonResponse([
                 'success'   => false,
                 'messages'  => [
@@ -76,13 +83,6 @@ class TaskCreateAction implements ServerMiddlewareInterface
                 ]
             ], 500);
         }
-
-        $this->task->setCallbackUrl($data['callback_url'])
-            ->setParams($data['data'])
-            ->setLastRenderId($data['render']);
-
-        $this->entityManager->persist($this->task);
-        $this->entityManager->flush();
 
         if (!$this->entityManager->contains($this->task)) {
             return new JsonResponse([
@@ -93,18 +93,33 @@ class TaskCreateAction implements ServerMiddlewareInterface
             ], 500);
         }
 
-        $this->task->setPath(realpath(implode(DIRECTORY_SEPARATOR, [
-            $this->config['filepath']['work_path'],
+        $this->task->setPath(implode(DIRECTORY_SEPARATOR, [
+            realpath($this->config['filepath']['work_path']),
             $this->task->getId()
-        ])));
+        ]));
 
         $editor_result = false;
         if ($this->config['filepath']['run_local']) {
+            if (!$this->copyResources()) {
+                $this->task->setStatus(TaskService::TASK_STATUS_ERROR);
+                $this->entityManager->persist($this->task);
+                $this->entityManager->flush();
+                return new JsonResponse([
+                    'success'   => false,
+                    'messages'  => [
+                        'Error getting resources',
+                    ]
+                ], 500);
+            }
             $json_path = implode(DIRECTORY_SEPARATOR, [
                 $this->task->getPath(),
                 'data.json'
             ]);
-            if (!FileService::saveJson($data['data'], $json_path)) {
+            $json_data = [
+                'render' => $data['render'],
+                'data' => $data['data']
+            ];
+            if (!FileService::saveJson($json_data, $json_path)) {
                 $this->task->setStatus(TaskService::TASK_STATUS_ERROR);
                 $this->entityManager->persist($this->task);
                 $this->entityManager->flush();
@@ -116,8 +131,10 @@ class TaskCreateAction implements ServerMiddlewareInterface
                 ], 500);
             }
             $local_data = [
-                $data['render'],
-                $json_path
+                sprintf('"%s"', implode(DIRECTORY_SEPARATOR, [
+                    $this->task->getPath(),
+                    'script.jsx'
+                ]))
             ];
             $editor_result = EditorService::runAppLocal($local_data, $this->config);
         }
@@ -153,5 +170,22 @@ class TaskCreateAction implements ServerMiddlewareInterface
                 'Task successfully created',
             ]
         ], 201);
+    }
+
+    /**
+     * @return bool
+     */
+    protected function copyResources(): bool
+    {
+        if (!@mkdir($this->task->getPath(), 0777, true) && !is_dir($this->task->getPath())) {
+            return false;
+        }
+        foreach ($this->task->getTemplate()->getPaths() as $path) {
+            if (!FileService::checkFileExist($path)
+                || !copy($path, $this->task->getPath())) {
+                return false;
+            }
+        }
+        return true;
     }
 }

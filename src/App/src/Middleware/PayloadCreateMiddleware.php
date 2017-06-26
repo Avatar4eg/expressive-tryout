@@ -28,7 +28,7 @@ class PayloadCreateMiddleware
             return $response->withStatus(400);
         }
 
-        $request->{'parsed_data'} = StringService::clearArray($content);
+        $request->{'parsed_data'} = StringService::clearArray($content, ['callback_url', 'data']);
 
         return $out($request, $response);
     }

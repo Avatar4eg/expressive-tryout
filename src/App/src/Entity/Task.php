@@ -93,6 +93,7 @@ class Task extends SampleEntity
     public function __construct(Client $client, string $client_task_id, Template $template) {
         $this->setClient($client);
         $this->setClientTaskId($client_task_id);
+        $this->setTemplate($template);
         $this->setTimeCreated(new \DateTime());
     }
 

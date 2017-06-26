@@ -91,7 +91,7 @@ class AppResponseAction implements ServerMiddlewareInterface
         $this->entityManager->flush();
 
         if ($data['status'] === TaskService::TASK_STATUS_READY && $this->task->getClient() !== null) {
-            $url = $this->task->getCallbackUrl() ?: $this->task->getClient()->getApiUrl();
+            $url = $this->task->getCallbackUrl() ?: $this->task->getClient()->getApiUrl() . '/' . $this->task->getId();
             $config = [
                 'url'       => $url,
                 'params'    => $this->task->getClient()->getApiParams()

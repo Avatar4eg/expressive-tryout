@@ -38,11 +38,15 @@ class StringService
 
     /**
      * @param array $array
+     * @param array $skip_keys
      * @return array
      */
-    public static function clearArray(array $array): array
+    public static function clearArray(array $array, array $skip_keys = []): array
     {
         foreach ($array as $key => $item) {
+            if (in_array($key, $skip_keys, true)) {
+                continue;
+            }
             if (!is_array($item)) {
                 $array[$key] = self::clearString($item);
             } else {

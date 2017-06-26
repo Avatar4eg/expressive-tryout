@@ -2,6 +2,7 @@
 namespace App\Service;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
@@ -34,7 +35,7 @@ class FileService
                 'headers' => $params
             ]);
             return true;
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
+        } catch (ClientException $e) {
             return $e->getCode() === 403;
         }
     }
@@ -51,7 +52,7 @@ class FileService
             if ($json_file === false) {
                 return false;
             }
-            fwrite($json_file, json_encode($data['data'], self::JSON_ENCODE_SETTINGS));
+            fwrite($json_file, json_encode($data, self::JSON_ENCODE_SETTINGS));
             fclose($json_file);
             return true;
         } catch (\Exception $e) {

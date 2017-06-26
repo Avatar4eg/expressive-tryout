@@ -17,12 +17,11 @@ class EditorService
             $config['filepath']['editor_path'],
             implode(' ', $config['filepath']['editor_params']),
             implode(' ', $data),
-            // some other run params
         ]);
 
         try {
             if (0 === stripos(PHP_OS, 'WIN')) {
-                pclose(popen('start /B ' . $command, 'r'));
+                pclose(popen('start /B "" ' . $command, 'r'));
             } else {
                 pclose(popen($command . ' &', 'r'));
             }
