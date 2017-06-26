@@ -1,0 +1,52 @@
+<?= $this->doctype('HTML5'); ?>
+<html>
+    <head>
+        <?php /** Headers */
+        $this->headTitle('zend-expressive')
+            ->setSeparator(' — ')
+            ->setAutoEscape(false);
+        $this->headMeta()
+            ->setCharset('UTF-8')
+            ->appendName('robots', 'index,follow')
+            ->appendName('viewport', 'width=device-width, initial-scale=1.0')
+            ->appendHttpEquiv('Content-Type', 'text/html; charset=UTF-8')
+            ->appendHttpEquiv('Content-Language', 'ru-RU')
+            ->appendHttpEquiv('X-UA-Compatible', 'IE=edge');
+
+        /** Styles pre content */
+        $this->headLink()
+            ->prependStylesheet('//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css?ver=3.3.7')
+            ->prependStylesheet('//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css?ver=4.7.0');
+        $this->headStyle()->captureStart();
+        echo
+<<<CSS
+body { padding-top: 60px; }
+.app { display: flex; min-height: 100vh; flex-direction: column; }
+.app-content { flex: 1; }
+.app-footer { padding-bottom: 1em; }
+.zf-green, h2 a { color: #68b604; }
+CSS
+        ;
+        $this->headStyle()->captureEnd();
+
+        /** Render */
+        echo $this->headTitle();
+        echo $this->headMeta();
+        echo $this->headLink();
+        echo $this->headStyle();?>
+    </head>
+    <body class="app">
+        <?php /** Content */
+        echo $this->partial('layout/part::header');
+        echo $this->partial('layout/part::content');
+        echo $this->partial('layout/part::footer');
+
+        /** Scripts post content */
+        $this->inlineScript()
+            ->prependFile('//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js?ver=3.3.7', 'text/javascript', ['defer' => true])
+            ->prependFile('//code.jquery.com/jquery-3.2.1.min.js?ver=3.2.1', 'text/javascript', ['defer' => true]);
+
+        /** Render */
+        echo $this->inlineScript(); ?>
+    </body>
+</html>
