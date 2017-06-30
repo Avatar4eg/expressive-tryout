@@ -21,6 +21,7 @@ class ConfigProvider
         return [
             'dependencies' => $this->getDependencies(),
             'templates'    => $this->getTemplates(),
+            'routes'       => $this->getRoutes(),
         ];
     }
 
@@ -58,6 +59,65 @@ class ConfigProvider
                 'error'         => [__DIR__ . '/../templates/error'],
                 'layout'        => [__DIR__ . '/../templates/layout'],
                 'layout/part'   => [__DIR__ . '/../templates/layout/part'],
+            ],
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public function getRoutes(): array
+    {
+        return [
+            [
+                'name'            => 'api.task.create',
+                'path'            => '/api/task',
+                'middleware'      => [
+                    Middleware\AuthenticationMiddleware::class,
+                    Middleware\ConfigMiddleware::class,
+                    Middleware\PayloadCreateMiddleware::class,
+                    Action\TaskCreateAction::class,
+                ],
+                'allowed_methods' => ['POST'],
+            ],
+            [
+                'name'            => 'api.task.modify',
+                'path'            => '/api/task/[:task_id]/[:action]',
+                'middleware'      => [
+                    Middleware\AuthenticationMiddleware::class,
+                    Middleware\ConfigMiddleware::class,
+                    Middleware\PayloadModifyMiddleware::class,
+                    Action\TaskModifyAction::class,
+                ],
+                'allowed_methods' => ['PATCH'],
+            ],
+            [
+                'name'            => 'api.task.get.list',
+                'path'            => '/api/task',
+                'middleware'      => [
+                    Middleware\AuthenticationMiddleware::class,
+                    Action\TaskGetAction::class,
+                ],
+                'allowed_methods' => ['GET'],
+            ],
+            [
+                'name'            => 'api.task.get.one',
+                'path'            => '/api/task/[:task_id]',
+                'middleware'      => [
+                    Middleware\AuthenticationMiddleware::class,
+                    Action\TaskGetAction::class,
+                ],
+                'allowed_methods' => ['GET'],
+            ],
+            [
+                'name'            => 'api.response',
+                'path'            => '/api/response/[:task_id]',
+                'middleware'      => [
+                    Middleware\AuthenticationMiddleware::class,
+                    Middleware\PayloadAppMiddleware::class,
+                    Action\AppResponseAction::class,
+                ],
+                'allowed_methods' => ['POST'],
             ],
         ];
     }

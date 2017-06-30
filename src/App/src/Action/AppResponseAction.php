@@ -53,10 +53,10 @@ class AppResponseAction implements ServerMiddlewareInterface
      */
     public function process(ServerRequestInterface $request, DelegateInterface $delegate): JsonResponse
     {
-        $data = $request{'parsed_data'};
-
+        /** @var array $data */
+        $data = $request->getAttribute('parsed_content');
         /** @var Client $client */
-        $client = $request->{'client'};
+        $client = $request->getAttribute('client');
 
         $client_role = $client->getRole();
         if ($client_role !== RoleService::ROLE_APP || $client_role !== RoleService::ROLE_ADMIN) {

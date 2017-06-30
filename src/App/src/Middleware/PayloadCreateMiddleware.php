@@ -2,10 +2,12 @@
 namespace App\Middleware;
 
 use App\Service\StringService;
-use Psr\Http\Message\ResponseInterface;
+use Interop\Http\ServerMiddleware\DelegateInterface;
+use Interop\Http\ServerMiddleware\MiddlewareInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Zend\Diactoros\Response\JsonResponse;
 
-class PayloadCreateMiddleware
+class PayloadCreateMiddleware implements MiddlewareInterface
 {
     /**
      * PayloadMiddleware constructor.
@@ -15,7 +17,13 @@ class PayloadCreateMiddleware
 
     }
 
-    public function __invoke(ServerRequestInterface $request, ResponseInterface $response, callable $out)
+    /**
+     * @param ServerRequestInterface $request
+     * @param DelegateInterface $delegate
+     * @return \Psr\Http\Message\ResponseInterface|JsonResponse
+     * @throws \InvalidArgumentException
+     */
+    public function process(ServerRequestInterface $request, DelegateInterface $delegate)
     {
         $content = json_decode($request->getBody()->getContents(), true);
 
@@ -25,11 +33,14 @@ class PayloadCreateMiddleware
             || !array_key_exists('render', $content)
             || !array_key_exists('data', $content)
             || !array_key_exists('callback_url', $content)) {
-            return $response->withStatus(400);
+            return new JsonResponse([
+                'success'   => false,
+                'messages'  => [
+                    'Bad payload',
+                ]
+            ], 400);
         }
 
-        $request->{'parsed_data'} = StringService::clearArray($content, ['callback_url', 'data']);
-
-        return $out($request, $response);
+        return $delegate->process($request->withAttribute('parsed_content', StringService::clearArray($content, ['callback_url', 'data'])));
     }
 }

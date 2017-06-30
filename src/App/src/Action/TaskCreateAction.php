@@ -52,9 +52,10 @@ class TaskCreateAction implements ServerMiddlewareInterface
      */
     public function process(ServerRequestInterface $request, DelegateInterface $delegate): JsonResponse
     {
+        /** @var array $data */
+        $data = $request->getAttribute('parsed_content');
         /** @var Client $client */
-        $client = $request->{'client'};
-        $data = $request->{'parsed_data'};
+        $client = $request->getAttribute('client');
 
         /** @var Template|null $template */
         $template = $this->entityManager->getRepository(Template::class)->find($data['template']);

@@ -51,7 +51,7 @@ class TaskModifyAction implements ServerMiddlewareInterface
     public function process(ServerRequestInterface $request, DelegateInterface $delegate): JsonResponse
     {
         /** @var Client $client */
-        $client = $request->{'client'};
+        $client = $request->getAttribute('client');
 
         $task_id = $request->getAttribute('task_id');
         $params = [
@@ -95,7 +95,8 @@ class TaskModifyAction implements ServerMiddlewareInterface
      */
     public function runAction(ServerRequestInterface $request, DelegateInterface $delegate): JsonResponse
     {
-        $data = $request{'parsed_data'};
+        /** @var array $data */
+        $data = $request->getAttribute('parsed_content');
 
         $this->task->setLastRenderId($data['render']);
         $this->entityManager->persist($this->task);
@@ -107,7 +108,11 @@ class TaskModifyAction implements ServerMiddlewareInterface
                 $this->task->getPath(),
                 'data.json'
             ]);
-            if (!FileService::saveJson($this->task->getParams(), $json_path)) {
+            $json_data = [
+                'render' => $data['render'],
+                'data' => $data['data']
+            ];
+            if (!FileService::saveJson($json_data, $json_path)) {
                 $this->task->setStatus(TaskService::TASK_STATUS_ERROR);
                 $this->entityManager->persist($this->task);
                 $this->entityManager->flush();
@@ -119,8 +124,10 @@ class TaskModifyAction implements ServerMiddlewareInterface
                 ], 500);
             }
             $local_data = [
-                $data['render'],
-                $json_path
+                sprintf('"%s"', implode(DIRECTORY_SEPARATOR, [
+                    $this->task->getPath(),
+                    'script.jsx'
+                ]))
             ];
             $editor_result = EditorService::runAppLocal($local_data, $this->config);
         }

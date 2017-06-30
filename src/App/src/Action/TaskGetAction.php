@@ -61,7 +61,7 @@ class TaskGetAction implements ServerMiddlewareInterface
     public function getItemAction(int $id, ServerRequestInterface $request, DelegateInterface $delegate): JsonResponse
     {
         /** @var Client $client */
-        $client = $request->{'client'};
+        $client = $request->getAttribute('client');
 
         $params = [
             'id' => $id

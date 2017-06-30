@@ -2,10 +2,12 @@
 namespace App\Middleware;
 
 use App\Service\StringService;
-use Psr\Http\Message\ResponseInterface;
+use Interop\Http\ServerMiddleware\DelegateInterface;
+use Interop\Http\ServerMiddleware\MiddlewareInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Zend\Diactoros\Response\JsonResponse;
 
-class PayloadModifyMiddleware
+class PayloadModifyMiddleware implements MiddlewareInterface
 {
     /**
      * PayloadMiddleware constructor.
@@ -15,18 +17,21 @@ class PayloadModifyMiddleware
 
     }
 
-    public function __invoke(ServerRequestInterface $request, ResponseInterface $response, callable $out)
+    public function process(ServerRequestInterface $request, DelegateInterface $delegate)
     {
         $content = json_decode($request->getBody()->getContents(), true);
 
         if (!is_array($content)
             || !array_key_exists('render', $content)) {
-            return $response->withStatus(400);
+            return new JsonResponse([
+                'success'   => false,
+                'messages'  => [
+                    'Bad payload',
+                ]
+            ], 400);
         }
 
-        $request->{'parsed_data'} = $this->clearContent($content);
-
-        return $out($request, $response);
+        return $delegate->process($request->withAttribute('parsed_content', StringService::clearArray($content)));
     }
 
     protected function clearContent(array $content): array

@@ -29,33 +29,4 @@
  */
 
 $app->get('/', App\Action\HomePageAction::class, 'home');
-$app->post('/api/task', [
-    App\Middleware\AuthenticationMiddleware::class,
-    App\Middleware\ConfigMiddleware::class,
-    App\Middleware\PayloadCreateMiddleware::class,
-    App\Action\TaskCreateAction::class,
-], 'api.task.create');
-//$app->patch('/api/task/[:task_id]/[:action]', [
-//    App\Middleware\AuthenticationMiddleware::class,
-//    App\Middleware\ConfigMiddleware::class,
-//    App\Middleware\PayloadModifyMiddleware::class,
-//    App\Action\TaskModifyAction::class,
-//], 'api.task.modify')
-//    ->setOptions([
-//        'tokens' => ['id' => '\d+'],
-//    ]);
-//$app->get('/api/task[/:task_id]', [
-//    App\Middleware\AuthenticationMiddleware::class,
-//    App\Action\TaskGetAction::class,
-//], 'api.task.get')
-//    ->setOptions([
-//        'tokens' => ['id' => '\d+'],
-//    ]);
-//$app->post('/api/response/[:task_id]', [
-//    App\Middleware\AuthenticationMiddleware::class,
-//    App\Middleware\PayloadAppMiddleware::class,
-//    App\Action\AppResponseAction::class,
-//], 'api.response')
-//    ->setOptions([
-//        'tokens' => ['id' => '\d+'],
-//    ]);
+$app->injectRoutesFromConfig((new App\ConfigProvider())());
